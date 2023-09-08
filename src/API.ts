@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBCbAVZb0RWt5z85666rxgHAtkQhqTizOk',
@@ -23,7 +23,10 @@ export async function getList() {
   return querySnapshot.docs.map(item => ({ ...(item.data() as { name: string; amount: number }), id: item.id }));
 }
 
-export function updateListItem(itemID: string, newItem: string) {}
+export function updateListItem(itemID: string, newItem: string) {
+  deleteListItem(itemID);
+  addListItem(newItem);
+}
 
 export async function setListItem() {
   await setDoc(doc(db, 'todolist_items', 'item'), {
@@ -32,11 +35,12 @@ export async function setListItem() {
 }
 
 export async function addListItem(data: string) {
-  console.log('t');
-  const docRef = await addDoc(collection(db, 'todolist_items'), {
-    name: data,
+  // const docRef = await addDoc(collection(db, 'todolist_items'), {
+  //   name: data,
+  // });
+  await updateDoc(doc(db, 'todolist_items', 'item'), {
+    name: arrayUnion(data),
   });
-  console.log(await getDoc(doc(db, 'todolist_items', docRef.id)));
 }
 
 export async function deleteListItem(itemID: string) {

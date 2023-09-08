@@ -2,15 +2,15 @@
   <table>
     <tr>
       <div :class="'submit'">
-        <input :value="input" placeholder="input your input" @input="(e:any)=>input= e.target.value" />
+        <input v-model="input" placeholder="input your input" @input="(e:any)=>input= e.target.value" required />
         <button @click="save(input)">submit</button>
       </div>
     </tr>
     <tr>
       <div v-for="(item, index) in list">
         <div v-if="editPosition === index">
-          <input :value="editText" v-bind:placeholder="list[index].name" @input="(e:any)=>editText= e.target.value" />
-          <button @click="edit(index)">save</button>
+          <input v-model="editText" :placeholder="list[index].name" @input="(e:any)=>editText= e.target.value" />
+          <button @click="edit(item.id, editText)">save</button>
         </div>
         <div v-else>
           <th>
@@ -26,31 +26,43 @@
 </template>
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { getList, deleteListItem, updateListItem, addListItem } from './API';
+import * as API from './API';
 
 const input = ref('');
 const editText = ref('');
 const editPosition = ref<null | number>();
 const list = ref<{ name: string; amount: number; id: string }[]>([]);
 onMounted(async () => {
-  list.value = await getList();
+  list.value = await API.getList();
 });
 
 async function save(input: any) {
-  addListItem(input);
-  list.value = await getList();
+  startOfInput();
+  API.addListItem(input);
+  endOfInput();
 }
 
-function edit(index: number) {
-  if (editText.value !== '') {
-    editPosition.value = null;
-    list.value[index].name = editText.value;
-    editText.value = '';
-  }
+async function edit(itemID: string, data: string) {
+  startOfInput();
+  del(itemID);
+  save(data);
+  editPosition.value = null;
+  endOfInput();
 }
-function del(ID: string) {
-  list.value = list.value.filter(item => item.id !== ID);
-  deleteListItem(ID);
+function del(itemID: string) {
+  API.deleteListItem(itemID);
+  // endOfInput();
+}
+
+async function startOfInput() {
+  list.value = await API.getList();
+}
+async function endOfInput() {
+  try {
+    list.value.push(API.getList());
+  } catch {
+    console.log('Failed to push Database List into Local List');
+  }
 }
 </script>
 
